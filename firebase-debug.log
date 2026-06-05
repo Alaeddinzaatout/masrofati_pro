@@ -1,0 +1,65 @@
+[debug] [2026-06-03T16:47:28.277Z] ----------------------------------------------------------------------
+[debug] [2026-06-03T16:47:28.300Z] Command:       C:\Program Files\nodejs\node.exe C:\Users\alaad\AppData\Roaming\npm\node_modules\firebase-tools\lib\bin\firebase.js deploy --only firestore:indexes
+[debug] [2026-06-03T16:47:28.302Z] CLI Version:   15.18.0
+[debug] [2026-06-03T16:47:28.302Z] Platform:      win32
+[debug] [2026-06-03T16:47:28.303Z] Node Version:  v24.15.0
+[debug] [2026-06-03T16:47:28.303Z] Time:          Wed Jun 03 2026 18:47:28 GMT+0200 (توقيت شرق أوروبا الرسمي)
+[debug] [2026-06-03T16:47:28.304Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-06-03T16:47:35.236Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-06-03T16:47:35.237Z] > authorizing via signed-in user (alaadden.zatout@gmail.com)
+[debug] [2026-06-03T16:47:35.237Z] [iam] checking project masrofati-be90c for permissions ["datastore.indexes.create","datastore.indexes.delete","datastore.indexes.list","datastore.indexes.update","firebase.projects.get"]
+[debug] [2026-06-03T16:47:35.239Z] Checked if tokens are valid: false, expires at: 1780501037771
+[debug] [2026-06-03T16:47:35.240Z] Checked if tokens are valid: false, expires at: 1780501037771
+[debug] [2026-06-03T16:47:35.240Z] > refreshing access token with scopes: []
+[debug] [2026-06-03T16:47:35.244Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2026-06-03T16:47:35.244Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-06-03T16:47:35.668Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2026-06-03T16:47:35.669Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-06-03T16:47:35.697Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/masrofati-be90c:testIamPermissions [none]
+[debug] [2026-06-03T16:47:35.697Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/masrofati-be90c:testIamPermissions  x-goog-user-project=masrofati-be90c
+[debug] [2026-06-03T16:47:35.697Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/masrofati-be90c:testIamPermissions {"permissions":["datastore.indexes.create","datastore.indexes.delete","datastore.indexes.list","datastore.indexes.update","firebase.projects.get"]}
+[debug] [2026-06-03T16:47:36.224Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/masrofati-be90c:testIamPermissions 200
+[debug] [2026-06-03T16:47:36.225Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/masrofati-be90c:testIamPermissions {"permissions":["datastore.indexes.create","datastore.indexes.delete","datastore.indexes.list","datastore.indexes.update","firebase.projects.get"]}
+[info] 
+[info] === Deploying to 'masrofati-be90c'...
+[info] 
+[info] i  deploying firestore 
+[info] i  firestore: ensuring required API firestore.googleapis.com is enabled... 
+[info] i  firestore: ensuring required API firestore.googleapis.com is enabled... 
+[debug] [2026-06-03T16:47:36.243Z] Checked if tokens are valid: true, expires at: 1780508854669
+[debug] [2026-06-03T16:47:36.244Z] Checked if tokens are valid: true, expires at: 1780508854669
+[debug] [2026-06-03T16:47:36.244Z] >>> [apiv2][query] GET https://firestore.googleapis.com/v1/projects/masrofati-be90c/databases/(default) [none]
+[debug] [2026-06-03T16:47:37.203Z] <<< [apiv2][status] GET https://firestore.googleapis.com/v1/projects/masrofati-be90c/databases/(default) 200
+[debug] [2026-06-03T16:47:37.203Z] <<< [apiv2][body] GET https://firestore.googleapis.com/v1/projects/masrofati-be90c/databases/(default) {"name":"projects/masrofati-be90c/databases/(default)","uid":"d1cc5c05-35fb-4888-8aa2-31b933de7c39","createTime":"2026-05-06T22:56:46.912852Z","updateTime":"2026-05-06T22:56:46.912852Z","locationId":"nam5","type":"FIRESTORE_NATIVE","concurrencyMode":"PESSIMISTIC","versionRetentionPeriod":"3600s","earliestVersionTime":"2026-06-03T15:47:36.610696Z","appEngineIntegrationMode":"DISABLED","keyPrefix":"s","pointInTimeRecoveryEnablement":"POINT_IN_TIME_RECOVERY_DISABLED","deleteProtectionState":"DELETE_PROTECTION_DISABLED","databaseEdition":"STANDARD","freeTier":true,"realtimeUpdatesMode":"REALTIME_UPDATES_MODE_ENABLED","etag":"IM6R3frC65QDMKSCjer8p5QD"}
+[info] i  firestore: reading indexes from firestore.indexes.json... 
+[info] i  cloud.firestore: checking firestore.rules for compilation errors... 
+[debug] [2026-06-03T16:47:37.213Z] Checked if tokens are valid: true, expires at: 1780508854669
+[debug] [2026-06-03T16:47:37.213Z] Checked if tokens are valid: true, expires at: 1780508854669
+[debug] [2026-06-03T16:47:37.213Z] >>> [apiv2][query] POST https://firebaserules.googleapis.com/v1/projects/masrofati-be90c:test [none]
+[debug] [2026-06-03T16:47:37.214Z] >>> [apiv2][body] POST https://firebaserules.googleapis.com/v1/projects/masrofati-be90c:test [omitted]
+[debug] [2026-06-03T16:47:38.287Z] <<< [apiv2][status] POST https://firebaserules.googleapis.com/v1/projects/masrofati-be90c:test 200
+[debug] [2026-06-03T16:47:38.288Z] <<< [apiv2][body] POST https://firebaserules.googleapis.com/v1/projects/masrofati-be90c:test {}
+[info] +  cloud.firestore: rules file firestore.rules compiled successfully 
+[info] i  firestore: deploying indexes... 
+[debug] [2026-06-03T16:47:38.295Z] Checked if tokens are valid: true, expires at: 1780508854669
+[debug] [2026-06-03T16:47:38.295Z] Checked if tokens are valid: true, expires at: 1780508854669
+[debug] [2026-06-03T16:47:38.297Z] >>> [apiv2][query] GET https://firestore.googleapis.com/v1/projects/masrofati-be90c/databases/(default)/collectionGroups/-/indexes [none]
+[debug] [2026-06-03T16:47:38.552Z] <<< [apiv2][status] GET https://firestore.googleapis.com/v1/projects/masrofati-be90c/databases/(default)/collectionGroups/-/indexes 200
+[debug] [2026-06-03T16:47:38.552Z] <<< [apiv2][body] GET https://firestore.googleapis.com/v1/projects/masrofati-be90c/databases/(default)/collectionGroups/-/indexes {"indexes":[{"name":"projects/masrofati-be90c/databases/(default)/collectionGroups/consumptionTrack/indexes/CICAgJim14AK","queryScope":"COLLECTION","fields":[{"fieldPath":"userId","order":"ASCENDING"},{"fieldPath":"daysUntilRunOut","order":"ASCENDING"},{"fieldPath":"__name__","order":"ASCENDING"}],"state":"READY","density":"SPARSE_ALL"},{"name":"projects/masrofati-be90c/databases/(default)/collectionGroups/purchases/indexes/CICAgOjXh4EK","queryScope":"COLLECTION","fields":[{"fieldPath":"userId","order":"ASCENDING"},{"fieldPath":"createdAt","order":"DESCENDING"},{"fieldPath":"__name__","order":"DESCENDING"}],"state":"READY","density":"SPARSE_ALL"},{"name":"projects/masrofati-be90c/databases/(default)/collectionGroups/purchases/indexes/CICAgJjF9oIK","queryScope":"COLLECTION","fields":[{"fieldPath":"name","order":"ASCENDING"},{"fieldPath":"userId","order":"ASCENDING"},{"fieldPath":"date","order":"DESCENDING"},{"fieldPath":"__name__","order":"DESCENDING"}],"state":"READY","density":"SPARSE_ALL"},{"name":"projects/masrofati-be90c/databases/(default)/collectionGroups/priceHistory/indexes/CICAgJiUpoMK","queryScope":"COLLECTION","fields":[{"fieldPath":"normalizedName","order":"ASCENDING"},{"fieldPath":"store","order":"ASCENDING"},{"fieldPath":"userId","order":"ASCENDING"},{"fieldPath":"date","order":"DESCENDING"},{"fieldPath":"__name__","order":"DESCENDING"}],"state":"READY","density":"SPARSE_ALL"},{"name":"projects/masrofati-be90c/databases/(default)/collectionGroups/priceHistory/indexes/CICAgOi3kJAK","queryScope":"COLLECTION","fields":[{"fieldPath":"normalizedName","order":"ASCENDING"},{"fieldPath":"userId","order":"ASCENDING"},{"fieldPath":"date","order":"DESCENDING"},{"fieldPath":"__name__","order":"DESCENDING"}],"state":"READY","density":"SPARSE_ALL"},{"name":"projects/masrofati-be90c/databases/(default)/collectionGroups/global_prices/indexes/CICAgJiUsZIK","queryScope":"COLLECTION","fields":[{"fieldPath":"productName","order":"ASCENDING"},{"fieldPath":"timestamp","order":"DESCENDING"},{"fieldPath":"__name__","order":"DESCENDING"}],"state":"READY","density":"SPARSE_ALL"}]}
+[debug] [2026-06-03T16:47:38.553Z] Checked if tokens are valid: true, expires at: 1780508854669
+[debug] [2026-06-03T16:47:38.554Z] Checked if tokens are valid: true, expires at: 1780508854669
+[debug] [2026-06-03T16:47:38.554Z] >>> [apiv2][query] GET https://firestore.googleapis.com/v1/projects/masrofati-be90c/databases/(default)/collectionGroups/-/fields?filter=indexConfig.usesAncestorConfig=false OR ttlConfig:* [none]
+[debug] [2026-06-03T16:47:38.784Z] <<< [apiv2][status] GET https://firestore.googleapis.com/v1/projects/masrofati-be90c/databases/(default)/collectionGroups/-/fields?filter=indexConfig.usesAncestorConfig=false OR ttlConfig:* 200
+[debug] [2026-06-03T16:47:38.784Z] <<< [apiv2][body] GET https://firestore.googleapis.com/v1/projects/masrofati-be90c/databases/(default)/collectionGroups/-/fields?filter=indexConfig.usesAncestorConfig=false OR ttlConfig:* {"fields":[{"name":"projects/masrofati-be90c/databases/(default)/collectionGroups/__default__/fields/*","indexConfig":{"indexes":[{"queryScope":"COLLECTION","fields":[{"fieldPath":"*","order":"ASCENDING"}],"state":"READY"},{"queryScope":"COLLECTION","fields":[{"fieldPath":"*","order":"DESCENDING"}],"state":"READY"},{"queryScope":"COLLECTION","fields":[{"fieldPath":"*","arrayConfig":"CONTAINS"}],"state":"READY"}]}}]}
+[debug] [2026-06-03T16:47:38.785Z] Checked if tokens are valid: true, expires at: 1780508854669
+[debug] [2026-06-03T16:47:38.785Z] Checked if tokens are valid: true, expires at: 1780508854669
+[debug] [2026-06-03T16:47:38.785Z] >>> [apiv2][query] GET https://firestore.googleapis.com/v1/projects/masrofati-be90c/databases/(default) [none]
+[debug] [2026-06-03T16:47:39.005Z] <<< [apiv2][status] GET https://firestore.googleapis.com/v1/projects/masrofati-be90c/databases/(default) 200
+[debug] [2026-06-03T16:47:39.006Z] <<< [apiv2][body] GET https://firestore.googleapis.com/v1/projects/masrofati-be90c/databases/(default) {"name":"projects/masrofati-be90c/databases/(default)","uid":"d1cc5c05-35fb-4888-8aa2-31b933de7c39","createTime":"2026-05-06T22:56:46.912852Z","updateTime":"2026-05-06T22:56:46.912852Z","locationId":"nam5","type":"FIRESTORE_NATIVE","concurrencyMode":"PESSIMISTIC","versionRetentionPeriod":"3600s","earliestVersionTime":"2026-06-03T15:47:38.404233Z","appEngineIntegrationMode":"DISABLED","keyPrefix":"s","pointInTimeRecoveryEnablement":"POINT_IN_TIME_RECOVERY_DISABLED","deleteProtectionState":"DELETE_PROTECTION_DISABLED","databaseEdition":"STANDARD","freeTier":true,"realtimeUpdatesMode":"REALTIME_UPDATES_MODE_ENABLED","etag":"IKHOyvvC65QDMKSCjer8p5QD"}
+[info] i  firestore: The following indexes are defined in your project but are not present in your firestore indexes file:
+	(consumptionTrack) -- (userId,ASCENDING) (daysUntilRunOut,ASCENDING)  -- Density:SPARSE_ALL 
+	(purchases) -- (userId,ASCENDING) (createdAt,DESCENDING)  -- Density:SPARSE_ALL 
+	(purchases) -- (name,ASCENDING) (userId,ASCENDING) (date,DESCENDING)  -- Density:SPARSE_ALL 
+	(priceHistory) -- (normalizedName,ASCENDING) (store,ASCENDING) (userId,ASCENDING) (date,DESCENDING)  -- Density:SPARSE_ALL 
+	(priceHistory) -- (normalizedName,ASCENDING) (userId,ASCENDING) (date,DESCENDING)  -- Density:SPARSE_ALL  

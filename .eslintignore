@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.expo/
+public/
+android/
+ios/
+web-build/
+*.js
+!src/**/*.js
+!app/**/*.js

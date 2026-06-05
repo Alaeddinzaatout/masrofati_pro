@@ -1,0 +1,78 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // 🛡️ دالة التأكد من تسجيل الدخول (سواء تجريبي أبو 14 يوم أو برو)
+    function isAuth() {
+      return request.auth != null;
+    }
+    // 🛡️ دالة الآدمن (أنت فقط)
+    function isAdmin() {
+      return isAuth() && request.auth.token.email == 'alaadden.zatout@gmail.com';
+    }
+
+    // ==========================================
+    // 📁 القسم الأول: الخزائن السرية (للمستخدم نفسه فقط)
+    // ==========================================
+    match /purchases/{docId} {
+      allow read, update, delete: if isAuth() && resource.data.userId == request.auth.uid;
+      allow create: if isAuth() && request.resource.data.userId == request.auth.uid;
+    }
+    match /settings/{userId} {
+      allow read, write: if isAuth() && request.auth.uid == userId;
+    }
+    match /shoppingLists/{docId} {
+      allow read, update, delete: if isAuth() && resource.data.userId == request.auth.uid;
+      allow create: if isAuth() && request.resource.data.userId == request.auth.uid;
+    }
+    match /consumptionTrack/{docId} {
+      allow read, update, delete: if isAuth() && resource.data.userId == request.auth.uid;
+      allow create: if isAuth() && request.resource.data.userId == request.auth.uid;
+    }
+    match /wasteLog/{docId} {
+      allow read, update, delete: if isAuth() && resource.data.userId == request.auth.uid;
+      allow create: if isAuth() && request.resource.data.userId == request.auth.uid;
+    }
+    match /priceAlerts/{docId} {
+      allow read, update, delete: if isAuth() && resource.data.userId == request.auth.uid;
+      allow create: if isAuth() && request.resource.data.userId == request.auth.uid;
+    }
+
+    // ==========================================
+    // 🌐 القسم الثاني: الساحات التشاركية (الرادار والأسعار)
+    // ==========================================
+    match /priceHistory/{docId} {
+      allow read, write: if isAuth(); 
+    }
+    match /productIndex/{docId} {
+      allow read, write: if isAuth();
+    }
+    match /global_prices/{docId} {
+      allow read, write: if isAuth();
+    }
+
+    // ==========================================
+    // 👤 القسم الثالث: الحسابات والاشتراكات
+    // ==========================================
+    match /users/{userId} {
+      allow read, write: if isAuth() && request.auth.uid == userId;
+    }
+
+    // ==========================================
+    // 🏦 القسم الرابع: البنك المركزي (المفاتيح)
+    // ==========================================
+    match /activation_keys/{docId} {
+      allow get: if isAuth(); 
+      allow update: if isAuth(); 
+      allow list, create, delete: if isAdmin(); 
+    }
+
+    // ==========================================
+    // ⚙️ القسم الخامس: إعدادات النظام (مفاتيح الذكاء الاصطناعي)
+    // ==========================================
+    match /system_config/{docId} {
+      allow read: if isAuth(); 
+      allow write: if isAdmin(); 
+    }
+  }
+}

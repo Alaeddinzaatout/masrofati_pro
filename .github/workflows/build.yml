@@ -1,0 +1,40 @@
+name: Dynamic Android Build
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      EXPO_USE_LOCAL_CACHE: false
+      EAS_PROJECT_ID: b883545b-79b8-47ed-a343-8a80927b7fce
+    steps:
+      - name: 🏗 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🔍 Find Project Directory
+        id: info
+        run: |
+          # البحث عن المجلد الذي يحتوي على app.json
+          DIR=$(dirname $(find . -name "app.json" -not -path "*/node_modules/*" | head -n 1))
+          echo "PROJECT_DIR=$DIR" >> $GITHUB_ENV
+          echo "المجلد المكتشف للمشروع هو: $DIR"
+
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: './package-lock.json'
+
+      - name: 📦 Install dependencies
+        run: |
+          cd ${{ env.PROJECT_DIR }}
+          npm install
+
+      - name: 🚀 Build APK
+        run: |
+          cd ${{ env.PROJECT_DIR }}
+          npx eas-cli build --platform android --profile preview --non-interactive
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}

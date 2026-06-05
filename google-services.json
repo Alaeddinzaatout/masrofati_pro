@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "927741835178",
+    "project_id": "masrofati-pro",
+    "storage_bucket": "masrofati-pro.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:927741835178:android:38b2c5a208d529fc4d5dd3",
+        "android_client_info": {
+          "package_name": "com.alaadden.masrofatipro"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "927741835178-7a9lh1uhlrh1nmcmde4mgbdpe3rvorau.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBSloPXEmFGQpesJ3Y2XJ1hoRn7j4FBSiY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "927741835178-7a9lh1uhlrh1nmcmde4mgbdpe3rvorau.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

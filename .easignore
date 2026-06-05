@@ -1,0 +1,31 @@
+# Dependencies
+node_modules/
+
+# Build artifacts
+dist/
+web-build/
+build/
+
+# Expo
+.expo/
+expo-env.d.ts
+
+# Native folders (EAS will prebuild them if managed)
+# If you have manual changes in these folders, comment them out.
+android/
+ios/
+
+# IDEs
+.idea/
+.vscode/
+*.iml
+
+# Logs
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# Environment
+.env
+.env.local
+.env.*.local
