@@ -13,10 +13,28 @@
         "buildType": "apk"
       },
       "distribution": "internal",
-      "channel": "preview"
+      "channel": "preview",
+      "env": {
+        "EXPO_PUBLIC_FIREBASE_API_KEY": "AIzaSyBnwhUwsvCag4IGfwLn-4XzeIp4AG_ErNs",
+        "EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN": "masrofati-pro.firebaseapp.com",
+        "EXPO_PUBLIC_FIREBASE_PROJECT_ID": "masrofati-pro",
+        "EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET": "masrofati-pro.firebasestorage.app",
+        "EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID": "927741835178",
+        "EXPO_PUBLIC_FIREBASE_APP_ID": "1:927741835178:web:d2d5404d16f617414d5dd3",
+        "EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID": "G-0CRTZF9DYX"
+      }
     },
     "production": {
-      "channel": "production"
+      "channel": "production",
+      "env": {
+        "EXPO_PUBLIC_FIREBASE_API_KEY": "AIzaSyBnwhUwsvCag4IGfwLn-4XzeIp4AG_ErNs",
+        "EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN": "masrofati-pro.firebaseapp.com",
+        "EXPO_PUBLIC_FIREBASE_PROJECT_ID": "masrofati-pro",
+        "EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET": "masrofati-pro.firebasestorage.app",
+        "EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID": "927741835178",
+        "EXPO_PUBLIC_FIREBASE_APP_ID": "1:927741835178:web:d2d5404d16f617414d5dd3",
+        "EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID": "G-0CRTZF9DYX"
+      }
     }
   },
   "submit": {

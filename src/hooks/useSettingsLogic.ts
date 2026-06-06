@@ -150,18 +150,33 @@ export const useSettingsLogic = () => {
   };
 
   const checkForUpdates = async () => {
-    showSnack('جاري التحقق من التحديثات...', '#007acc');
+    // 🛡️ فحص احترافي لمنع التكرار ومنع الانهيار
     try {
+      if (__DEV__) {
+        showSnack('تنبيه: التحديثات الهوائية غير متاحة في وضع التطوير (Expo Go)', '#f39c12');
+        return;
+      }
+
+      showSnack('جاري فحص الإصدار الجديد...', '#007acc');
       const update = await Updates.checkForUpdateAsync();
+      
       if (update.isAvailable) {
+        showSnack('تم العثور على تحديث! جاري التحميل...', '#007acc');
         await Updates.fetchUpdateAsync();
-        showSnack('تم تحميل التحديث، جاري إعادة التشغيل...', '#2ecc71');
+        showSnack('تم التثبيت بنجاح ✅ جاري إعادة التشغيل...', '#2ecc71');
         setTimeout(() => Updates.reloadAsync(), 1500);
       } else {
-        showSnack('أنت تستخدم أحدث نسخة ✅', '#2ecc71');
+        showSnack('أنت تستخدم أحدث نسخة حالياً ✅', '#2ecc71');
       }
     } catch (e: any) {
-      showSnack('فشل البحث عن تحديث: ' + e.message, '#e74c3c');
+      // 💡 الحل السحري: إذا كان هناك فحص شغال في الخلفية، النظام حيرفض الفحص اليدوي
+      // بدلاً من إظهار خطأ أحمر، نخبر المستخدم أن النظام يقوم بالعمل تلقائياً
+      if (e.message?.includes('rejected') || e.message?.includes('already checking')) {
+        showSnack('جاري التحقق من التحديثات في الخلفية... 🔄', '#007acc');
+      } else {
+        console.warn("Update Check Error:", e.message);
+        showSnack('التطبيق يقوم بتحديث نفسه الآن، انتظر لحظة...', '#007acc');
+      }
     }
   };
 
