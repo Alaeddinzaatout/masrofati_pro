@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { auth } from '../firebase/config';
 import { ConsumptionAnalysis, ProductIndexDoc, Purchase, StorePrice } from '../types';
-import { analyzeExpenseText, askCerebrasGeneric, ExpenseItem, getCerebrasKey } from './cerebras';
+import { analyzeExpenseText, askDeepSeekGeneric, ExpenseItem, getDeepSeekKey } from './cerebras';
 import { analyzeReceipt, GeminiReceiptResponse, GeminiSuggestion, suggestRestock as geminiSuggestRestock, getUserApiKey as getGeminiKey } from './gemini';
 import { analyzeConsumption, getLowStockItems, predictShortages } from './inventoryPredictor';
 import { analyzePriceTrend, comparePrices, priceAdvisor } from './priceAdvisor';
@@ -266,16 +266,21 @@ class AIServiceManager {
 
         await this.deepseekLimiter.canProceed();
         
+        console.log("AI_MANAGER: Entering askGenericText for DeepSeek");
+        
         // 🛡️ مناعة DeepSeek (Retry Loop)
         let retries = 3;
         while (retries > 0) {
             try {
                 const apiKey = await getDeepSeekKeyWithCache();
+                console.log("AI_MANAGER: DeepSeek Key found:", !!apiKey);
+                
                 if (!apiKey) throw new Error('مفتاح DeepSeek مفقود');
                 const result = await askDeepSeekGeneric(apiKey, systemPrompt, userPrompt);
                 if (result) await this.cache.set(cacheKey, result);
                 return result;
-            } catch (error) {
+            } catch (error: any) {
+                console.error("AI_MANAGER: DeepSeek Attempt Failed:", error.message);
                 retries--;
                 if (retries === 0) {
                     await this.deepseekLimiter.rollback();

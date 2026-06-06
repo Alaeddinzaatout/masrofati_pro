@@ -160,95 +160,93 @@ export const useShoppingLogic = (): ShoppingLogicOutput => {
     loadPrices();
   }, [items.map(i => i.id).join(',')]);
 
-  // 3. 🧠 الدماغ المحمي بالكامل (تم نقله لـ useEffect ليدعم Async/Await السريع)
+  // 3. 🧠 الدماغ المحمي بالكامل - محرك توقع النواقص الاحترافي
   useEffect(() => {
     const generateSuggestions = async () => {
-      if (purchases.length === 0) {
+      const uid = auth.currentUser?.uid;
+      if (!uid || purchases.length === 0) {
         setSuggestions([]);
         return;
       }
 
-      const rootMap = new Map<string, any[]>();
-      
-      purchases.forEach(p => {
-        if (!p.name || typeof p.name !== 'string') return;
-        if (p.name.match(/[a-zA-Z0-9]{7,}/)) return; // طرد السيريالات والأكواد
-        
-        const root = getRootName(p.name);
-        if (!root || root.trim().length < 2) return;
-        
-        // 🛑 فلتر جديد: طرد الكماليات والكلمات المحظورة قبل أن تدخل الحسبة أصلاً!
-        if (NON_ESSENTIALS_BLACKLIST.some(word => root.includes(word))) return;
-        
-        if (!rootMap.has(root)) rootMap.set(root, []);
-        rootMap.get(root)?.push(p);
-      });
+      try {
+        // 1. جلب كافة بيانات التتبع من قاعدة البيانات (الحقيقة الوحيدة)
+        const trackQuery = query(collection(db, 'consumptionTrack'), where('userId', '==', uid));
+        const trackSnap = await getDocs(trackQuery);
+        const tracks = trackSnap.docs.map(d => d.data());
 
-      const result: SmartSuggestion[] = [];
-      const shoppingListRoots = new Set(items.map(i => getRootName(i.name)));
-      const now = new Date().getTime();
+        const result: SmartSuggestion[] = [];
+        const shoppingListRoots = new Set(items.map(i => getRootName(i.name)));
+        const now = new Date().getTime();
 
-      for (const [rootName, productPurchases] of Array.from(rootMap.entries())) {
-        if (shoppingListRoots.has(rootName)) continue;
+        for (const track of tracks) {
+          const rootName = track.normalizedName;
+          if (shoppingListRoots.has(rootName)) continue;
 
-        // 🛑 رفع معيار التكرار: يجب أن تكون اشتريته 3 مرات على الأقل ليتم اعتباره "نمط استهلاكي" (بدل مرتين)
-        if (productPurchases.length < 3) continue;
+          // 🛑 تصفية الكماليات الصارمة (زي فرشة الشعر اللي حكى عليها المدير)
+          if (NON_ESSENTIALS_BLACKLIST.some(word => rootName.includes(word))) continue;
 
-        productPurchases.sort((a, b) => {
-          const dateA = new Date(a.date || a.createdAt).getTime();
-          const dateB = new Date(b.date || b.createdAt).getTime();
-          return dateB - dateA;
-        });
+          const daysSinceLast = track.lastPurchaseDate ? (now - new Date(track.lastPurchaseDate).getTime()) / 86400000 : 99;
+          const consumptionRate = track.dailyConsumptionRate || 0.1;
+          const daysUntilRunOut = track.daysUntilRunOut || 0;
 
-        const rawDate = productPurchases[0].date || productPurchases[0].createdAt;
-        const lastPurchaseDate = new Date(rawDate).getTime();
-        
-        if (isNaN(lastPurchaseDate)) continue;
+          // 💡 منطق "الأساسيات" (Staple Logic)
+          const analysis = await analyzeConsumption(purchases, track.productName);
+          const isStaple = (analysis as any).isStaple;
+          const stapleRank = (analysis as any).stapleRank || 0;
 
-        const daysSinceLastPurchase = (now - lastPurchaseDate) / (1000 * 60 * 60 * 24);
+          let priority = 0;
+          let reason = '';
+          let type: 'smart' | 'urgent' = 'smart';
 
-        // الجدار الفولاذي: فترة سماح 4 أيام
-        if (daysSinceLastPurchase < 4) continue;
+          // أ. النواقص الحرجة (باقي 3 أيام أو أقل)
+          if (daysUntilRunOut <= 3) {
+            priority = 3 + stapleRank * 0.5;
+            type = 'urgent';
+            reason = '⚠️ المخزون انتهى تقريباً';
+          } 
+          // ب. التذكير بالأساسيات (حتى لو لسه ما كملتش، بس قربت)
+          else if (isStaple && daysUntilRunOut <= 7) {
+            priority = 2 + stapleRank * 0.3;
+            reason = '🏠 من أساسيات الحوش';
+          }
+          // ج. الأنماط الاستهلاكية العادية
+          else if (daysSinceLast > 10 && consumptionRate > 0.05) {
+            priority = 1;
+            reason = `💡 آخر شراء منذ ${Math.floor(daysSinceLast)} يوم`;
+          }
 
-        const analysis = await analyzeConsumption(purchases, rootName);
-        if (!analysis.exists) continue;
+          // 📉 حساب "عجز الاستهلاك" (Deficit Calculation)
+          // لو واحد متعود يشري 4 حليب في الأسبوع وغاب أسبوعين، نقترح عليه كمية أكبر
+          let suggestedQty = Math.ceil(consumptionRate * 7) || 1; // الافتراضي هو استهلاك أسبوع
+          if (daysSinceLast > 14 && isStaple) {
+            suggestedQty = Math.ceil(consumptionRate * 10); // زدنا الكمية لتعويض الغياب
+          }
 
-        const totalQty = productPurchases.reduce((sum, p) => sum + (Number(p.quantity) || 1), 0);
-        const avgQty = Math.round(totalQty / productPurchases.length) || 1;
+          const feedback = userFeedback[rootName];
+          if (feedback) {
+            priority -= (feedback.rejectedCount * 1.0);
+            priority += (feedback.acceptedCount * 0.5);
+          }
 
-        let priority = 1;
-        let type: 'smart' | 'urgent' = 'smart';
-        let reason = `💡 اخر شراء منذ ${Math.floor(daysSinceLastPurchase)} يوم`;
-
-        if (analysis.isCritical && daysSinceLastPurchase > 10) {
-          priority = 2.5;
-          type = 'urgent';
-          reason = '⚠️ المخزون انتهى تقريباً!';
-        } else if (analysis.isRunningLow && daysSinceLastPurchase > 7) {
-          priority = 1.5;
+          if (priority > 1.5 || (isStaple && priority > 0.8)) {
+            result.push({
+              name: track.productName,
+              type,
+              priority,
+              confidence: isStaple ? 1.0 : 0.7,
+              reason,
+              suggestedQty,
+              predictedRunOut: `${daysUntilRunOut} يوم`,
+              currentStock: track.currentStock,
+            });
+          }
         }
 
-        const feedback = userFeedback[rootName];
-        if (feedback) {
-          priority -= (feedback.rejectedCount * 0.8);
-          priority += (feedback.acceptedCount * 0.3);
-        }
-
-        if (priority > 0.5) {
-          result.push({
-            name: rootName,
-            type,
-            priority,
-            confidence: analysis.confidenceScore || 0.8,
-            reason,
-            suggestedQty: avgQty,
-            predictedRunOut: analysis.daysUntilRunOut ? `${analysis.daysUntilRunOut} أيام` : 'قريباً',
-            currentStock: analysis.currentStock,
-          });
-        }
+        setSuggestions(result.sort((a, b) => b.priority - a.priority).slice(0, 10));
+      } catch (err) {
+        console.warn("Failed to generate smart suggestions", err);
       }
-
-      setSuggestions(result.sort((a, b) => b.priority - a.priority).slice(0, 8));
     };
 
     generateSuggestions();

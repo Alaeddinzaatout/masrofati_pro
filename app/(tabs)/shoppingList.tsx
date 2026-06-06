@@ -14,23 +14,25 @@ const SuggestionCard = ({
   suggestion: SmartSuggestion; 
   onAdd: (s: SmartSuggestion) => void 
 }) => {
-  const displayName = suggestion.name.length > 20 ? 'صنف غير معروف' : suggestion.name;
+  const displayName = suggestion.name.length > 20 ? suggestion.name.substring(0, 17) + '...' : suggestion.name;
+  const isUrgent = suggestion.type === 'urgent';
   
   return (
-    <Card style={styles.suggestionCard} mode="elevated">
+    <Card style={[styles.suggestionCard, isUrgent && styles.urgentCard]} mode="elevated">
       <Card.Content style={styles.suggestionContent}>
         <View style={styles.suggestionHeader}>
           <Avatar.Icon 
-            size={40} 
-            icon={suggestion.type === 'urgent' ? 'alert-circle' : 'lightbulb-on'} 
-            style={{ backgroundColor: suggestion.type === 'urgent' ? 'rgba(231, 76, 60, 0.15)' : 'rgba(46, 204, 113, 0.15)' }}
-            color={suggestion.type === 'urgent' ? '#e74c3c' : '#2ecc71'}
+            size={36} 
+            icon={isUrgent ? 'alert-circle' : 'home-heart'} 
+            style={{ backgroundColor: isUrgent ? 'rgba(231, 76, 60, 0.15)' : 'rgba(0, 122, 204, 0.15)' }}
+            color={isUrgent ? '#e74c3c' : '#3498db'}
           />
           <Text style={styles.suggestionTitle} numberOfLines={1}>{displayName}</Text>
         </View>
+        <Text style={[styles.suggestionReason, isUrgent && { color: '#e74c3c' }]}>{suggestion.reason}</Text>
         <Text style={styles.suggestionQty}>نقترح: <Text style={styles.qtyHighlight}>{suggestion.suggestedQty}</Text></Text>
         <TouchableOpacity style={styles.addSmallBtn} onPress={() => onAdd(suggestion)}>
-          <Text style={styles.addSmallBtnText}>+ أضف</Text>
+          <Text style={styles.addSmallBtnText}>+ سلة</Text>
         </TouchableOpacity>
       </Card.Content>
     </Card>
@@ -156,8 +158,10 @@ const styles = StyleSheet.create({
   suggestionContent: { padding: 12, alignItems: 'center' },
   suggestionHeader: { alignItems: 'center', marginBottom: 5 },
   suggestionTitle: { color: '#fff', fontSize: 14, fontWeight: 'bold', marginTop: 8, textAlign: 'center' },
+  suggestionReason: { color: '#8E94A5', fontSize: 10, marginTop: 4, textAlign: 'center', height: 30 },
   suggestionQty: { color: '#8E94A5', fontSize: 12, marginBottom: 10 },
   qtyHighlight: { color: '#fff', fontWeight: 'bold' },
+  urgentCard: { borderColor: 'rgba(231, 76, 60, 0.3)', borderWidth: 1 },
   addSmallBtn: { backgroundColor: 'rgba(0, 122, 204, 0.1)', paddingVertical: 8, paddingHorizontal: 16, borderRadius: 10, width: '100%', alignItems: 'center' },
   addSmallBtnText: { color: '#007acc', fontSize: 12, fontWeight: 'bold' },
   emptyContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', marginTop: 60, paddingHorizontal: 40 },

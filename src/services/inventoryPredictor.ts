@@ -44,6 +44,25 @@ async function askInventoryOracle(prompt: string): Promise<any> {
   }
 }
 
+// ====== 🏠 قائمة الأساسيات (The Staples List) ======
+// الأصناف اللي ما يقدروش يستغنوا عليها الليبيين
+const STAPLES_DICTIONARY: Record<string, { rank: number, category: string }> = {
+  'حليب': { rank: 10, category: 'ألبان' },
+  'خبز': { rank: 10, category: 'مخبوزات' },
+  'بيض': { rank: 9, category: 'بروتين' },
+  'زيت': { rank: 8, category: 'أساسيات' },
+  'طماطم': { rank: 8, category: 'خضروات' },
+  'بصل': { rank: 8, category: 'خضروات' },
+  'بطاطس': { rank: 8, category: 'خضروات' },
+  'سكر': { rank: 7, category: 'أساسيات' },
+  'أرز': { rank: 7, category: 'أساسيات' },
+  'مكرونة': { rank: 7, category: 'أساسيات' },
+  'ماء': { rank: 9, category: 'مشروبات' },
+  'شاي': { rank: 8, category: 'منبهات' },
+  'قهوة': { rank: 8, category: 'منبهات' },
+  'حفاضات': { rank: 10, category: 'أطفال' },
+};
+
 /**
  * تحليل معدل استهلاك صنف معين (النسخة الموحدة مع قاعدة البيانات - Single Source of Truth)
  */
@@ -62,12 +81,39 @@ export const analyzeConsumption = async (purchases: Purchase[], productName: str
       where('normalizedName', '==', normalized)
     );
     const snap = await getDocs(q);
-    if (snap.empty) return fallback;
+    
+    // 💡 ذكاء إضافي: لو مش موجود في التتبع، نفحصه في القاموس
+    const stapleInfo = STAPLES_DICTIONARY[normalized] || STAPLES_DICTIONARY[productName];
+    const isKnownStaple = !!stapleInfo;
+
+    if (snap.empty) {
+      if (isKnownStaple) {
+        // حتى لو ماعنداش سجل، نعتبروه موجود بأقل الإمكانيات
+        return {
+          exists: true,
+          productName,
+          currentStock: 0,
+          avgDailyRate: 0.2,
+          confidenceScore: 0.5,
+          isRunningLow: true,
+          isCritical: true,
+          daysUntilRunOut: 0,
+          isStaple: true,
+          stapleRank: stapleInfo.rank
+        } as any;
+      }
+      return fallback;
+    }
 
     const data = snap.docs[0].data();
     const daysUntilRunOut = data.daysUntilRunOut || 0;
-    const isCritical = daysUntilRunOut <= 3 || data.currentStock <= 0.1;
-    const isRunningLow = daysUntilRunOut <= 7 || data.currentStock <= 0.3;
+    
+    // 🧠 حساب الحرج بناءً على نوع الصنف
+    const criticalThreshold = isKnownStaple ? 4 : 2; // الأساسيات تنبهك قبل 4 أيام
+    const lowThreshold = isKnownStaple ? 8 : 4;
+
+    const isCritical = daysUntilRunOut <= criticalThreshold || data.currentStock <= 0.1;
+    const isRunningLow = daysUntilRunOut <= lowThreshold || data.currentStock <= 0.3;
 
     return {
       exists: true,
@@ -82,7 +128,9 @@ export const analyzeConsumption = async (purchases: Purchase[], productName: str
       daysUntilRunOut,
       lastPurchaseDate: data.lastPurchaseDate || '',
       seasonalMultiplier: 1,
-    };
+      isStaple: isKnownStaple,
+      stapleRank: stapleInfo?.rank || 0
+    } as any;
   } catch (error) {
     logError('inventoryPredictor', error, { context: 'analyzeConsumption' });
     return fallback;

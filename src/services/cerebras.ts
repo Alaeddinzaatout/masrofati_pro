@@ -200,9 +200,13 @@ export const analyzeExpenseText = async (apiKey: string, text: string): Promise<
       })
     });
 
-    if (!response.ok) throw new Error('فشل استدعاء DeepSeek API');
+    const responseData = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      console.error("DEEPSEEK API ERROR:", response.status, responseData);
+      throw new Error(responseData.error?.message || 'فشل استدعاء DeepSeek API');
+    }
     
-    const responseData = await response.json();
     const choice = responseData?.choices?.[0];
     const rawText = choice?.message?.content || '';
     const result = extractJSON(rawText);
@@ -242,9 +246,13 @@ export const askDeepSeekGeneric = async (apiKey: string, systemPrompt: string, u
       })
     });
 
-    if (!response.ok) throw new Error('فشل استدعاء DeepSeek API');
+    const responseData = await response.json().catch(() => ({}));
 
-    const responseData = await response.json();
+    if (!response.ok) {
+      console.error("DEEPSEEK API ERROR:", response.status, responseData);
+      throw new Error(responseData.error?.message || 'فشل استدعاء DeepSeek API');
+    }
+
     const choice = responseData?.choices?.[0];
     let rawText = choice?.message?.content || '';
 
