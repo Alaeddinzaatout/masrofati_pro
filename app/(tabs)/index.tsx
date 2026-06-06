@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
-import { FAB, Snackbar } from 'react-native-paper';
+import { FAB, Snackbar, Button, Text } from 'react-native-paper';
 import PurchaseList from '../../src/components/home/PurchaseList';
 import StatsSummary from '../../src/components/home/StatsSummary';
 import AdvisorModal from '../../src/components/home/AdvisorModal';
@@ -9,8 +9,10 @@ import HomeHeader from '../../src/components/home/HomeHeader';
 import PurchaseFormModal from '../../src/components/home/PurchaseFormModal';
 import IntelligenceCard from '../../src/components/home/IntelligenceCard';
 import { useHomeLogic } from '../../src/hooks/useHomeLogic';
+import { useRouter } from 'expo-router';
 
 export default function HomeScreen() {
+  const router = useRouter();
   const {
     form,
     setForm,
@@ -29,6 +31,9 @@ export default function HomeScreen() {
     advisorVisible,
     setAdvisorVisible,
     intelligenceSummary,
+    accountStatus,
+    daysLeft,
+    isAdmin,
     filteredPurchases,
     stats,
     handleAddPurchase,
@@ -39,6 +44,32 @@ export default function HomeScreen() {
   return (
     <View style={styles.container}>
       <HomeHeader />
+
+      {isAdmin && (
+        <View style={{ backgroundColor: 'rgba(0, 122, 204, 0.1)', marginHorizontal: 15, marginTop: 10, padding: 10, borderRadius: 12, borderRightWidth: 4, borderRightColor: '#007acc', flexDirection: 'row', alignItems: 'center' }}>
+          <Text style={{ color: '#007acc', fontSize: 13, fontWeight: 'bold' }}>👑 حساب الإدارة (Admin)</Text>
+        </View>
+      )}
+
+      {!isAdmin && accountStatus === 'trial' && (
+        <View style={{ backgroundColor: '#1C222E', marginHorizontal: 15, marginTop: 10, padding: 10, borderRadius: 12, borderRightWidth: 4, borderRightColor: '#3498db', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Text style={{ color: '#fff', fontSize: 13, fontWeight: 'bold' }}>⏳ تجربة مجانية: {daysLeft} أيام متبقية</Text>
+          <Button mode="text" compact onPress={() => router.push('/upgrade')} labelStyle={{ fontSize: 11, color: '#FFD700' }}>ترقية ✨</Button>
+        </View>
+      )}
+
+      {!isAdmin && accountStatus === 'pro' && (
+        <View style={{ backgroundColor: 'rgba(255, 215, 0, 0.1)', marginHorizontal: 15, marginTop: 10, padding: 8, borderRadius: 12, borderRightWidth: 4, borderRightColor: '#FFD700', flexDirection: 'row', alignItems: 'center' }}>
+          <Text style={{ color: '#FFD700', fontSize: 13, fontWeight: 'bold' }}>👑 النسخة برو: {daysLeft} أيام متبقية</Text>
+        </View>
+      )}
+
+      {!isAdmin && accountStatus === 'expired' && (
+        <View style={{ backgroundColor: 'rgba(231, 76, 60, 0.1)', marginHorizontal: 15, marginTop: 10, padding: 10, borderRadius: 12, borderRightWidth: 4, borderRightColor: '#e74c3c', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Text style={{ color: '#e74c3c', fontSize: 13, fontWeight: 'bold' }}>❌ انتهى الاشتراك</Text>
+          <Button mode="contained" compact buttonColor="#FFD700" textColor="#000" onPress={() => router.push('/upgrade')} labelStyle={{ fontSize: 11 }}>تجديد 🚀</Button>
+        </View>
+      )}
 
       <FilterHeader 
         searchQuery={searchQuery}

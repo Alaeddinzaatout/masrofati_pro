@@ -10,9 +10,17 @@ import { getStockAlerts } from '../services/priceHistory'; // ⚡ استيراد
 import { addPurchase, listenToPurchases, removePurchase } from '../services/purchases';
 import { Purchase } from '../types';
 import { getQuickStats, initSearchEngine, searchPurchases } from '../utils/searchEngine';
+import { calculateRemainingDays } from '../utils/dateUtils';
+import { onSnapshot } from 'firebase/firestore';
+import { useRouter } from 'expo-router';
+import { showQuotaAlert } from '../services/subscription';
 
 export const useHomeLogic = () => {
+  const router = useRouter();
   const [purchases, setPurchases] = useState<Purchase[]>([]);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [accountStatus, setAccountStatus] = useState<'trial' | 'pro' | 'expired'>('trial');
+  const [daysLeft, setDaysLeft] = useState<number | null>(null);
   const [intelligenceSummary, setIntelligenceSummary] = useState<{
     safeToSpend: number;
     criticalItem: string | null;
@@ -94,25 +102,52 @@ export const useHomeLogic = () => {
   const [advisorAlert, setAdvisorAlert] = useState<any>(null);
   const [advisorVisible, setAdvisorVisible] = useState(false);
 
-  // 1. Firebase Listener
+  // 1. Firebase Listeners
   useEffect(() => {
-    let unsubscribe: (() => void) | null = null;
+    let unsubscribePurchases: (() => void) | null = null;
+    let unsubscribeUser: (() => void) | null = null;
 
     const unsubAuth = onAuthStateChanged(auth, (user) => {
+      if (unsubscribePurchases) unsubscribePurchases();
+      if (unsubscribeUser) unsubscribeUser();
+
       if (user) {
-        unsubscribe = listenToPurchases(user.uid, setPurchases);
+        setIsAdmin(user.email === 'alaadden.zatout@gmail.com');
+        unsubscribePurchases = listenToPurchases(user.uid, setPurchases);
+        
+        const userRef = doc(db, 'users', user.uid);
+        unsubscribeUser = onSnapshot(userRef, (docSnap) => {
+          if (docSnap.exists()) {
+            const data = docSnap.data();
+            const subscribed = !!data.isSubscribed;
+            const proExpiry = data.subscriptionExpiresAt || data.subscriptionEndDate;
+            const trialExpiry = data.trialExpiresAt || data.trialEndDate;
+            
+            if (subscribed && proExpiry) {
+              const remaining = calculateRemainingDays(proExpiry);
+              setDaysLeft(remaining);
+              setAccountStatus(remaining > 0 ? 'pro' : 'expired');
+            } else if (!subscribed && trialExpiry) {
+              const remaining = calculateRemainingDays(trialExpiry);
+              setDaysLeft(remaining);
+              setAccountStatus(remaining > 0 ? 'trial' : 'expired');
+            } else {
+              setDaysLeft(0);
+              setAccountStatus('expired');
+            }
+          }
+        });
       } else {
-        if (unsubscribe) {
-          unsubscribe();
-          unsubscribe = null;
-        }
         setPurchases([]);
+        setAccountStatus('trial');
+        setDaysLeft(null);
       }
     });
 
     return () => {
       unsubAuth();
-      if (unsubscribe) unsubscribe();
+      if (unsubscribePurchases) unsubscribePurchases();
+      if (unsubscribeUser) unsubscribeUser();
     };
   }, []);
 
@@ -211,6 +246,30 @@ export const useHomeLogic = () => {
     if (!form.name || !form.price || !form.store) return;
     const uid = auth.currentUser?.uid;
     if (!uid) return;
+
+    // 🛡️ حماية الإدخال اليدوي للمستخدمين منتهيي الصلاحية
+    if (!editItem && accountStatus === 'expired') {
+      try {
+        const today = new Date().toISOString().split('T')[0];
+        const usageStr = await AsyncStorage.getItem('manual_usage');
+        let usage = usageStr ? JSON.parse(usageStr) : { date: today, count: 0 };
+        
+        if (usage.date !== today) {
+          usage = { date: today, count: 0 };
+        }
+
+        if (usage.count >= 3) {
+          showQuotaAlert(router, 'manual_entry');
+          return;
+        }
+
+        usage.count += 1;
+        await AsyncStorage.setItem('manual_usage', JSON.stringify(usage));
+      } catch (e) {
+        console.warn('Error checking manual usage', e);
+      }
+    }
+
     try {
      if (editItem) {
         // Update existing
@@ -278,7 +337,7 @@ export const useHomeLogic = () => {
       setSnackMessage('فشل العملية. حاول مرة أخرى.');
       setSnackVisible(true);
     }
-  }, [form, editItem]);
+  }, [form, editItem, accountStatus, router]);
 
   const handleEditItem = useCallback((item: Purchase) => {
     setEditItem(item);
@@ -380,6 +439,9 @@ export const useHomeLogic = () => {
     advisorVisible,
     setAdvisorVisible,
     intelligenceSummary,
+    accountStatus,
+    daysLeft,
+    isAdmin,
     // Derived Data
     filteredPurchases,
     stats,

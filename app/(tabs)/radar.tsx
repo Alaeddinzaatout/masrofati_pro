@@ -5,6 +5,11 @@ import { ScrollView, StyleSheet, View, RefreshControl, TouchableOpacity } from '
 import { Button, Card, Chip, Searchbar, Text, ActivityIndicator } from 'react-native-paper';
 import { RadarResult, searchGlobalMarket, GlobalPrice } from '../../src/services/marketRadar';
 import { calculateDistance } from '../../src/utils/distance';
+import { auth, db } from '../../src/firebase/config';
+import { onAuthStateChanged } from 'firebase/auth';
+import { doc, onSnapshot } from 'firebase/firestore';
+import { calculateRemainingDays } from '../../src/utils/dateUtils';
+import { useRouter } from 'expo-router';
 
 const RADIUS_OPTIONS = [
   { label: '5 كم', value: 5 },
@@ -14,6 +19,7 @@ const RADIUS_OPTIONS = [
 ];
 
 export default function RadarScreen() {
+  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -24,6 +30,9 @@ export default function RadarScreen() {
   const [userLocation, setUserLocation] = useState<{ lat: number, lon: number } | null>(null);
   const [searchRadius, setSearchRadius] = useState<number>(10);
   const [locationPermission, setLocationPermission] = useState<boolean | null>(null);
+
+  const [accountStatus, setAccountStatus] = useState<'trial' | 'pro' | 'expired'>('trial');
+  const [isAdmin, setIsAdmin] = useState(false);
 
   // Ask for location on mount
   useEffect(() => {
@@ -44,8 +53,48 @@ export default function RadarScreen() {
     })();
   }, []);
 
+  // Fetch account status
+  useEffect(() => {
+    let unsubSnap: (() => void) | null = null;
+    const unsubAuth = onAuthStateChanged(auth, (user) => {
+      if (unsubSnap) {
+        unsubSnap();
+        unsubSnap = null;
+      }
+      if (user) {
+        setIsAdmin(user.email === 'alaadden.zatout@gmail.com');
+        const userRef = doc(db, 'users', user.uid);
+        unsubSnap = onSnapshot(userRef, (docSnap) => {
+          if (docSnap.exists()) {
+            const data = docSnap.data();
+            const subscribed = !!data.isSubscribed;
+            const proExpiry = data.subscriptionExpiresAt || data.subscriptionEndDate;
+            const trialExpiry = data.trialExpiresAt || data.trialEndDate;
+            
+            if (subscribed && proExpiry) {
+              const remaining = calculateRemainingDays(proExpiry);
+              setAccountStatus(remaining > 0 ? 'pro' : 'expired');
+            } else if (!subscribed && trialExpiry) {
+              const remaining = calculateRemainingDays(trialExpiry);
+              setAccountStatus(remaining > 0 ? 'trial' : 'expired');
+            } else {
+              setAccountStatus('expired');
+            }
+          }
+        });
+      } else {
+        setAccountStatus('trial');
+        setIsAdmin(false);
+      }
+    });
+    return () => {
+      unsubAuth();
+      if (unsubSnap) unsubSnap();
+    };
+  }, []);
+
   const handleSearch = async () => {
-    if (!searchQuery.trim()) return;
+    if (!searchQuery.trim() || accountStatus === 'expired') return;
     setLoading(true);
     setSearched(true);
     const data = await searchGlobalMarket(searchQuery);
@@ -54,7 +103,7 @@ export default function RadarScreen() {
   };
 
   const onRefresh = async () => {
-    if (!searchQuery.trim()) return;
+    if (!searchQuery.trim() || accountStatus === 'expired') return;
     setRefreshing(true);
     
     // Update location on refresh too
@@ -119,6 +168,34 @@ export default function RadarScreen() {
       </View>
     );
   };
+
+  if (!isAdmin && accountStatus === 'expired') {
+    return (
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <Text variant="headlineMedium" style={styles.headerTitle}>🌐 الرادار المجتمعي</Text>
+        </View>
+        <View style={styles.centerBox}>
+          <Ionicons name="lock-closed" size={80} color="#e74c3c" />
+          <Text style={{ color: '#fff', fontSize: 18, fontWeight: 'bold', marginTop: 20, textAlign: 'center' }}>
+            الرادار مقفل 🔒
+          </Text>
+          <Text style={{ color: '#8E94A5', textAlign: 'center', marginTop: 10, marginBottom: 30 }}>
+            الرادار ميزة حصرية لمشتركي البرو لمقارنة الأسعار ومعرفة الأرخص في السوق.
+          </Text>
+          <Button 
+            mode="contained" 
+            buttonColor="#FFD700" 
+            textColor="#000"
+            style={{ borderRadius: 12, paddingHorizontal: 20 }}
+            onPress={() => router.push('/upgrade')}
+          >
+            الترقية للنسخة برو
+          </Button>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>

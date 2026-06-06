@@ -14,11 +14,11 @@ import * as ImageManipulator from 'expo-image-manipulator';
  * @returns {Promise<string[]>} مصفوفة من base64 (قد تكون مقسمة)
  */
 export const optimizeImage = async (uri) => {
-  // المرحلة 1: تصغير الأبعاد إلى 1024px كحد أقصى مع جودة 70%
+  // المرحلة 1: تصغير الأبعاد إلى 800px كحد أقصى مع جودة 50%
   const resized = await ImageManipulator.manipulateAsync(
     uri,
-    [{ resize: { width: 1024 } }],
-    { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG, base64: true }
+    [{ resize: { width: 800 } }],
+    { compress: 0.5, format: ImageManipulator.SaveFormat.JPEG, base64: true }
   );
 
   // إذا كانت الصورة طويلة جداً (ارتفاع > 2000)، نقوم بالتقسيم الذكي (Sliding Window)
@@ -26,13 +26,13 @@ export const optimizeImage = async (uri) => {
       // تنفيذ بسيط للتقسيم: النصف العلوي والنصف السفلي
       const topPart = await ImageManipulator.manipulateAsync(
         uri,
-        [{ crop: { originX: 0, originY: 0, width: resized.width, height: resized.height / 2 } }, { resize: { width: 1024 } }],
-        { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG, base64: true }
+        [{ crop: { originX: 0, originY: 0, width: resized.width, height: Math.floor(resized.height / 2) } }, { resize: { width: 800 } }],
+        { compress: 0.5, format: ImageManipulator.SaveFormat.JPEG, base64: true }
       );
       const bottomPart = await ImageManipulator.manipulateAsync(
         uri,
-        [{ crop: { originX: 0, originY: resized.height / 2, width: resized.width, height: resized.height / 2 } }, { resize: { width: 1024 } }],
-        { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG, base64: true }
+        [{ crop: { originX: 0, originY: Math.floor(resized.height / 2), width: resized.width, height: Math.floor(resized.height / 2) } }, { resize: { width: 800 } }],
+        { compress: 0.5, format: ImageManipulator.SaveFormat.JPEG, base64: true }
       );
       return [topPart.base64, bottomPart.base64];
   }

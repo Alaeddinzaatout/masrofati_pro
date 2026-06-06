@@ -47,7 +47,7 @@ export const activateLicenseKey = async (userId: string, keyString: string) => {
     const userRef = doc(db, 'users', userId);
     await setDoc(userRef, {
       isSubscribed: true,
-      subscriptionEndDate: newEndDate.toISOString(),
+      subscriptionExpiresAt: newEndDate.toISOString(),
       scansUsed: 0,
       questionsUsed: 0,
       lastActivationAt: serverTimestamp(),

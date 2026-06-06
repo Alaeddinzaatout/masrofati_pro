@@ -68,6 +68,7 @@ const NON_ESSENTIALS_BLACKLIST = [
 ];
 
 export const useShoppingLogic = (): ShoppingLogicOutput => {
+  const router = useRouter();
   const [items, setItems] = useState<ShoppingItem[]>([]);
   const [purchases, setPurchases] = useState<any[]>([]);
   const [priceHistoryMap, setPriceHistoryMap] = useState<Record<string, PriceData>>({});

@@ -6,6 +6,7 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { doc, onSnapshot, addDoc, setDoc, collection, getDoc } from 'firebase/firestore';
 import { auth, db } from '../../src/firebase/config';
 import { useSettingsLogic } from '../../src/hooks/useSettingsLogic';
+import { calculateRemainingDays } from '../../src/utils/dateUtils';
 import ApiKeysCard from '../../src/components/settings/ApiKeysCard';
 import AppearanceCard from '../../src/components/settings/AppearanceCard';
 import SmartNotificationsCard from '../../src/components/settings/SmartNotificationsCard';
@@ -15,6 +16,7 @@ export default function SettingsScreen() {
   const router = useRouter();
   const [isAdmin, setIsAdmin] = useState(false);
   const [isSubscribed, setIsSubscribed] = useState(false);
+  const [accountStatus, setAccountStatus] = useState<'trial' | 'pro' | 'expired'>('trial');
   const [daysLeft, setDaysLeft] = useState<number | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   
@@ -92,23 +94,32 @@ export default function SettingsScreen() {
         unsubSnap = onSnapshot(userRef, (docSnap) => {
           if (docSnap.exists()) {
             const data = docSnap.data();
-            setIsSubscribed(!!data.isSubscribed);
-            if (data.isSubscribed && data.subscriptionEndDate) {
-              const endDate = new Date(data.subscriptionEndDate);
-              const now = new Date();
-              const diffTime = endDate.getTime() - now.getTime();
-              const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-              setDaysLeft(diffDays > 0 ? diffDays : 0);
+            const subscribed = !!data.isSubscribed;
+            setIsSubscribed(subscribed);
+
+            const proExpiry = data.subscriptionExpiresAt || data.subscriptionEndDate;
+            const trialExpiry = data.trialExpiresAt || data.trialEndDate;
+
+            if (subscribed && proExpiry) {
+              const remaining = calculateRemainingDays(proExpiry);
+              setDaysLeft(remaining);
+              setAccountStatus(remaining > 0 ? 'pro' : 'expired');
+            } else if (!subscribed && trialExpiry) {
+              const remaining = calculateRemainingDays(trialExpiry);
+              setDaysLeft(remaining);
+              setAccountStatus(remaining > 0 ? 'trial' : 'expired');
             } else {
-              setDaysLeft(null);
+              setDaysLeft(0);
+              setAccountStatus('expired');
             }
           }
         }, (err) => {
-          console.warn("Settings subscription listener permission issue (ignoring during transition):", err.message);
+          console.warn("Settings subscription listener permission issue:", err.message);
         });
       } else {
         setIsAdmin(false);
         setIsSubscribed(false);
+        setAccountStatus('trial');
         setDaysLeft(null);
       }
     });
@@ -192,23 +203,42 @@ export default function SettingsScreen() {
           </>
         )}
 
-        {!isAdmin && !isSubscribed && (
-          <Button 
-            mode="contained" 
-            icon="star" 
-            buttonColor="#FFD700"
-            textColor="#000"
-            style={{ marginHorizontal: 15, marginBottom: 20, borderRadius: 12 }}
-            onPress={() => router.push('/upgrade')}
-          >
-            الترقية للنسخة برو وتفعيل المفتاح
-          </Button>
+        {!isAdmin && accountStatus === 'trial' && (
+          <View style={{ marginHorizontal: 15, marginBottom: 20, backgroundColor: '#1C222E', borderRadius: 16, padding: 15, alignItems: 'center', borderLeftWidth: 4, borderLeftColor: '#3498db' }}>
+            <Text style={{ color: '#fff', fontSize: 16, fontWeight: 'bold' }}>
+              ⏳ الفترة التجريبية: متبقي {daysLeft !== null ? daysLeft : '...'} يوم
+            </Text>
+            <Button 
+              mode="text" 
+              onPress={() => router.push('/upgrade')} 
+              labelStyle={{ color: '#FFD700', fontWeight: 'bold' }}
+            >
+              ترقية الآن للحصول على كافة المميزات
+            </Button>
+          </View>
         )}
 
-        {isSubscribed && !isAdmin && (
+        {!isAdmin && accountStatus === 'pro' && (
           <Text style={{ textAlign: 'center', fontSize: 16, fontWeight: 'bold', color: '#FFD700', marginVertical: 18 }}>
             👑 حسابك مفعل النسخة برو (متبقي {daysLeft !== null ? daysLeft : '...'} يوم)
           </Text>
+        )}
+
+        {!isAdmin && accountStatus === 'expired' && (
+          <View style={{ marginHorizontal: 15, marginBottom: 20, backgroundColor: 'rgba(231, 76, 60, 0.1)', borderRadius: 16, padding: 15, alignItems: 'center', borderLeftWidth: 4, borderLeftColor: '#e74c3c' }}>
+            <Text style={{ color: '#e74c3c', fontSize: 16, fontWeight: 'bold' }}>
+              ❌ انتهت صلاحية الحساب
+            </Text>
+            <Button 
+              mode="contained" 
+              buttonColor="#FFD700" 
+              textColor="#000"
+              style={{ marginTop: 10, borderRadius: 12 }}
+              onPress={() => router.push('/upgrade')}
+            >
+              تجديد الاشتراك الآن
+            </Button>
+          </View>
         )}
 
         <AppearanceCard 

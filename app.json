@@ -26,6 +26,9 @@
       "permissions": [
         "android.permission.RECORD_AUDIO",
         "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.ACCESS_COARSE_LOCATION",
         "android.permission.ACCESS_FINE_LOCATION"
       ],
       "googleServicesFile": "./google-services.json",
@@ -57,8 +60,14 @@
       "expo-sharing"
     ],
     "extra": {
-      "router": {}
+      "router": {},
+      "eas": {
+        "projectId": "bc209fa3-7e58-4bb1-a872-650a6ce0e053"
+      }
     },
-    "owner": "alaaddenzaatout"
+    "owner": "alaaddenzaatout",
+    "updates": {
+      "url": "https://u.expo.dev/bc209fa3-7e58-4bb1-a872-650a6ce0e053"
+    }
   }
 }

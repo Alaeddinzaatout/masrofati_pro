@@ -95,6 +95,7 @@ export default function RootLayout() {
     if (!I18nManager.isRTL) {
       I18nManager.forceRTL(true);
     }
+    console.log("🔥 Firebase & Layout Initialized Safely");
   }, []);
 
   // مراقبة حالة تسجيل الدخول (مستقلة تماماً)

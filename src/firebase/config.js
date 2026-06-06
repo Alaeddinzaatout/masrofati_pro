@@ -1,9 +1,10 @@
 // @ts-nocheck
 // Credentials for Masrofati Pro (Business/Lab Environment)
-// Restrict the API key in Google Cloud Console + lock down Firestore rules.
 import { getApp, getApps, initializeApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
-import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from 'firebase/firestore';
+import { initializeAuth, getReactNativePersistence, getAuth } from 'firebase/auth';
+import { initializeFirestore, persistentLocalCache, _InMemoryCache } from 'firebase/firestore';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform } from 'react-native';
 
 // Your web app's Firebase configuration (Masrofati Pro)
 const firebaseConfig = {
@@ -16,10 +17,20 @@ const firebaseConfig = {
   measurementId: "G-0CRTZF9DYX"
 };
 
-// Guard against re-initialization on Fast Refresh.
+// 1. التهيئة الأساسية لـ Firebase
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 
-export const auth = getAuth(app);
+// 2. تهيئة Auth مع دعم الاستمرارية (Persistence) في الموبايل
+export const auth = Platform.OS !== 'web' 
+  ? initializeAuth(app, {
+      persistence: getReactNativePersistence(AsyncStorage)
+    })
+  : getAuth(app);
+
+// 3. تهيئة Firestore مع كاش محلي مستقر
+// تم تعطيل TabManager لأنه قد يسبب مشاكل في APK الموبايل
 export const db = initializeFirestore(app, {
-  localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
+  localCache: persistentLocalCache(),
+  // 💡 السطر القادم يحل مشكلة الانهيار في بعض شبكات الـ 4G/5G الضعيفة
+  experimentalForceLongPolling: Platform.OS !== 'web'
 });

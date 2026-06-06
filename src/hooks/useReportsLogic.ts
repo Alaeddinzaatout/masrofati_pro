@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { auth } from '../firebase/config';
+import { auth, db } from '../firebase/config';
 import { aiManager } from '../services/aiServiceManager';
 import { 
   checkAndAwardBadges, 
@@ -25,10 +25,15 @@ import { Purchase, Badge, WasteAnalysis, StorePrice } from '../types';
 
 const CHART_COLORS = ['#007acc', '#27ae60', '#e74c3c', '#f39c12', '#8e44ad', '#2ecc71', '#e67e22', '#1abc9c'];
 
+import { calculateRemainingDays } from '../utils/dateUtils';
+import { doc, onSnapshot } from 'firebase/firestore';
+
 export const useReportsLogic = () => {
   const router = useRouter();
   // --- الأساسيات ---
   const [purchases, setPurchases] = useState<Purchase[]>([]);
+  const [accountStatus, setAccountStatus] = useState<'trial' | 'pro' | 'expired'>('trial');
+  const [isAdmin, setIsAdmin] = useState(false);
   const [badges, setBadges] = useState<Badge[]>([]);
   const [totalSavings, setTotalSavings] = useState(0);
 
@@ -61,25 +66,50 @@ export const useReportsLogic = () => {
   // 1. المستمعات والبيانات الأولية
   useEffect(() => {
     let unsubPurchases: (() => void) | null = null;
+    let unsubUser: (() => void) | null = null;
 
     const unsubAuth = onAuthStateChanged(auth, (user) => {
+      if (unsubPurchases) unsubPurchases();
+      if (unsubUser) unsubUser();
+
       if (user) {
+        setIsAdmin(user.email === 'alaadden.zatout@gmail.com');
         unsubPurchases = listenToPurchases(user.uid, (data) => {
           setPurchases(data);
         });
+        
+        const userRef = doc(db, 'users', user.uid);
+        unsubUser = onSnapshot(userRef, (docSnap) => {
+          if (docSnap.exists()) {
+            const data = docSnap.data();
+            const subscribed = !!data.isSubscribed;
+            const proExpiry = data.subscriptionExpiresAt || data.subscriptionEndDate;
+            const trialExpiry = data.trialExpiresAt || data.trialEndDate;
+            
+            if (subscribed && proExpiry) {
+              const remaining = calculateRemainingDays(proExpiry);
+              setAccountStatus(remaining > 0 ? 'pro' : 'expired');
+            } else if (!subscribed && trialExpiry) {
+              const remaining = calculateRemainingDays(trialExpiry);
+              setAccountStatus(remaining > 0 ? 'trial' : 'expired');
+            } else {
+              setAccountStatus('expired');
+            }
+          }
+        });
+
         loadInitialData();
       } else {
-        if (unsubPurchases) {
-          unsubPurchases();
-          unsubPurchases = null;
-        }
         setPurchases([]);
+        setAccountStatus('trial');
+        setIsAdmin(false);
       }
     });
 
     return () => {
       unsubAuth();
       if (unsubPurchases) unsubPurchases();
+      if (unsubUser) unsubUser();
     };
   }, []);
 
