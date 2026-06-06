@@ -11,7 +11,7 @@ import { EditableItem, ValidationIssue } from '../types';
 import { getImageSize, optimizeImage } from '../utils/imageOptimizer';
 import { validateMath, normalizeUnit } from '../utils/validation';
 
-export type AnalysisMode = 'gemini' | 'cerebras';
+export type AnalysisMode = 'gemini' | 'deepseek';
 
 export const useReceiptLogic = () => {
   const router = useRouter();

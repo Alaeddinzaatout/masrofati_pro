@@ -1,4 +1,3 @@
-import { Cerebras } from '@cerebras/cerebras_cloud_sdk';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
@@ -6,9 +5,10 @@ import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { logError } from './logger';
 
-const CEREBRAS_KEY = 'cerebras-api-key';
-const CEREBRAS_ASYNC_KEY = 'cerebras-api-key-async';
-const CEREBRAS_MODEL = 'gpt-oss-120b';
+const DEEPSEEK_KEY = 'deepseek-api-key';
+const DEEPSEEK_ASYNC_KEY = 'deepseek-api-key-async';
+const DEEPSEEK_MODEL = 'deepseek-chat';
+const DEEPSEEK_URL = 'https://api.deepseek.com/chat/completions';
 
 // ====== Type Definitions ======
 
@@ -29,7 +29,7 @@ export interface TestResult {
 // ====== دوال المساعدة ======
 
 /**
- * استخراج JSON من نص Cerebras
+ * استخراج JSON من نص DeepSeek
  */
 function extractJSON(rawText: string): any[] {
   if (!rawText || rawText.trim() === '') return [];
@@ -56,7 +56,7 @@ function extractJSON(rawText: string): any[] {
     }
   }
 
-  // Fallback للتحليل اليدوي البسيط (نفس منطقك الأصلي)
+  // Fallback للتحليل اليدوي البسيط
   const lines = rawText.split(/[\n,،]+/).map(l => l.trim()).filter(l => l.length > 0);
   const fallbackItems: any[] = [];
   for (const line of lines) {
@@ -80,124 +80,143 @@ function extractJSON(rawText: string): any[] {
 
 // ====== حفظ واسترجاع مفتاح API (مع Fallback لـ AsyncStorage) ======
 
-export const saveCerebrasKey = async (userId: string, apiKey: string): Promise<void> => {
-  console.log("CEREBRAS_SERVICE: Attempting to save API key.");
+export const saveDeepSeekKey = async (userId: string, apiKey: string): Promise<void> => {
+  console.log("DEEPSEEK_SERVICE: Attempting to save API key.");
   try {
-    const testResult = await testCerebrasKey(apiKey.trim());
+    const testResult = await testDeepSeekKey(apiKey.trim());
     if (!testResult.success) throw new Error(testResult.message);
-    console.log("CEREBRAS_SERVICE: Key test passed.");
+    console.log("DEEPSEEK_SERVICE: Key test passed.");
 
     // 1. التخزين المحلي الآمن (للسرعة)
     if (Platform.OS === 'web') {
-      await AsyncStorage.setItem(CEREBRAS_KEY, apiKey.trim());
+      await AsyncStorage.setItem(DEEPSEEK_KEY, apiKey.trim());
     } else {
-      try { await SecureStore.setItemAsync(CEREBRAS_KEY, apiKey.trim()); } 
-      catch { await AsyncStorage.setItem(CEREBRAS_KEY, apiKey.trim()); }
+      try { await SecureStore.setItemAsync(DEEPSEEK_KEY, apiKey.trim()); } 
+      catch { await AsyncStorage.setItem(DEEPSEEK_KEY, apiKey.trim()); }
     }
 
-    // 2. المزامنة مع النظام العالمي (Firestore)
+    // 2. المزامنة مع النظام العالمي (Firestore) - استخدام deepseekKey كما هو مطلوب
     await setDoc(doc(db, 'system_config', 'api_keys'), {
-      cerebrasApiKey: apiKey.trim(),
+      deepseekKey: apiKey.trim(),
       updatedAt: new Date().toISOString()
     }, { merge: true });
-    console.log("CEREBRAS_SERVICE: Key saved successfully to global config.");
+    console.log("DEEPSEEK_SERVICE: Key saved successfully to global config.");
   } catch (e) {
-    console.log("CEREBRAS_SERVICE: General error in saveCerebrasKey:", e);
-    logError('cerebras', e, { context: 'saveCerebrasKey', userId });
+    console.log("DEEPSEEK_SERVICE: General error in saveDeepSeekKey:", e);
+    logError('deepseek', e, { context: 'saveDeepSeekKey', userId });
     throw e;
   }
 };
 
-export const getCerebrasKey = async (userId: string): Promise<string | null> => {
+export const getDeepSeekKey = async (userId: string): Promise<string | null> => {
   try {
     let key: string | null = null;
 
     // 1. محاولة الجلب من التخزين المحلي
     if (Platform.OS === 'web') {
-      key = await AsyncStorage.getItem(CEREBRAS_KEY);
+      key = await AsyncStorage.getItem(DEEPSEEK_KEY);
     } else {
       try {
-        key = await SecureStore.getItemAsync(CEREBRAS_KEY);
-        if (!key) key = await AsyncStorage.getItem(CEREBRAS_KEY);
+        key = await SecureStore.getItemAsync(DEEPSEEK_KEY);
+        if (!key) key = await AsyncStorage.getItem(DEEPSEEK_KEY);
       } catch {
-        key = await AsyncStorage.getItem(CEREBRAS_KEY);
+        key = await AsyncStorage.getItem(DEEPSEEK_KEY);
       }
     }
 
     if (key) return key;
 
-    // 2. محاولة السحابة (الإعدادات العالمية)
+    // 2. محاولة السحابة (الإعدادات العالمية) - استخدام deepseekKey
     const snap = await getDoc(doc(db, 'system_config', 'api_keys'));
     if (snap.exists()) {
-      const fbKey = snap.data()?.cerebrasApiKey;
+      const fbKey = snap.data()?.deepseekKey;
       if (fbKey) {
         // حفظ محلياً للمرة القادمة
         if (Platform.OS === 'web') {
-          await AsyncStorage.setItem(CEREBRAS_KEY, fbKey);
+          await AsyncStorage.setItem(DEEPSEEK_KEY, fbKey);
         } else {
-          try { await SecureStore.setItemAsync(CEREBRAS_KEY, fbKey); } catch {}
+          try { await SecureStore.setItemAsync(DEEPSEEK_KEY, fbKey); } catch {}
         }
         return fbKey;
       }
     }
   } catch (e) {
-    logError('cerebras', e, { context: 'getCerebrasKey', userId });
+    logError('deepseek', e, { context: 'getDeepSeekKey', userId });
   }
   return null;
 };
 
 // ====== العمليات الرئيسية ======
 
-export const testCerebrasKey = async (apiKey: string): Promise<TestResult> => {
+export const testDeepSeekKey = async (apiKey: string): Promise<TestResult> => {
   try {
-    const client = new Cerebras({ apiKey: apiKey.trim() });
-    const response = await client.chat.completions.create({
-      model: CEREBRAS_MODEL,
-      messages: [{ role: 'user', content: 'Say "Hello" only' }],
-      // ✂️ مسحنا max_tokens باش نعطوه مساحة يتنفس ويرد براحته
+    const response = await fetch(DEEPSEEK_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey.trim()}`
+      },
+      body: JSON.stringify({
+        model: DEEPSEEK_MODEL,
+        messages: [{ role: 'user', content: 'Say "Hello" only' }]
+      })
     });
-    
-    // 🪤 الفخ السري: طباعة رد السيرفر بالكامل في الشاشة السوداء (Terminal)
-    console.log("CEREBRAS FULL RESPONSE:", JSON.stringify(response, null, 2));
 
-    const choice = (response?.choices as any)?.[0];
+    const responseData = await response.json();
+    console.log("DEEPSEEK FULL RESPONSE:", JSON.stringify(responseData, null, 2));
+
+    if (!response.ok) {
+       return { success: false, message: responseData.error?.message || 'فشل الاتصال بـ DeepSeek' };
+    }
+
+    const choice = responseData?.choices?.[0];
     if (choice?.message?.content) return { success: true, message: 'المفتاح صالح ✓' };
     
     return { success: false, message: 'استجابة غير متوقعة' };
   } catch (error: any) {
-    console.log("CEREBRAS ERROR:", error);
-    return { success: false, message: error.message || 'فشل الاتصال بـ Cerebras' };
+    console.log("DEEPSEEK ERROR:", error);
+    return { success: false, message: error.message || 'فشل الاتصال بـ DeepSeek' };
   }
 };
+
 const SYSTEM_PROMPT = `أنت مساعد متخصص في تحليل فواتير المصروفات باللهجة الليبية. استخرج JSON مصفوفة فقط: [{"amount": رقم, "unitPrice": رقم, "quantity": رقم, "unit": نص, "category": نص, "description": نص}]. 
 [القاعدة الذهبية]: إياك أن تقوم بأي عملية حسابية نهائياً. استخرج "الكمية" وضعها في (quantity). استخرج الرقم المكتوب كإجمالي وضعه في (amount). اجعل حقل (unitPrice) دائماً 0.`;
 
 export const analyzeExpenseText = async (apiKey: string, text: string): Promise<ExpenseItem[]> => {
   try {
-    const client = new Cerebras({ apiKey: apiKey.trim() });
-    const response = await client.chat.completions.create({
-      model: CEREBRAS_MODEL,
-      messages: [
-        { role: 'system', content: SYSTEM_PROMPT },
-        { role: 'user', content: text.trim() }
-      ],
-      temperature: 0.1,
+    const response = await fetch(DEEPSEEK_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey.trim()}`
+      },
+      body: JSON.stringify({
+        model: DEEPSEEK_MODEL,
+        messages: [
+          { role: 'system', content: SYSTEM_PROMPT },
+          { role: 'user', content: text.trim() }
+        ],
+        temperature: 0.1
+      })
     });
 
-    const choice = (response?.choices as any)?.[0];
+    if (!response.ok) throw new Error('فشل استدعاء DeepSeek API');
+    
+    const responseData = await response.json();
+    const choice = responseData?.choices?.[0];
     const rawText = choice?.message?.content || '';
     const result = extractJSON(rawText);
 
     return result.map(item => ({
       amount: parseFloat(item.amount) || 0,
-      unitPrice: 0, // 👈 التعديل هنا: سحبنا الثقة منه نهائياً
+      unitPrice: 0,
       quantity: parseFloat(item.quantity) || 1,
       unit: item.unit || 'حبة',
       category: item.category || 'أخرى',
       description: item.description || item.name || 'بند غير معروف',
     }));
   } catch (error) {
-    logError('cerebras', error, { context: 'analyzeExpenseText' });
+    logError('deepseek', error, { context: 'analyzeExpenseText' });
     throw error;
   }
 };
@@ -205,19 +224,28 @@ export const analyzeExpenseText = async (apiKey: string, text: string): Promise<
 /**
  * 🌟 الدالة العامة (The Cure): تفصل المهام وتستقبل أي Prompt لحل مشكلة التهريب
  */
-export const askCerebrasGeneric = async (apiKey: string, systemPrompt: string, userPrompt: string): Promise<any> => {
+export const askDeepSeekGeneric = async (apiKey: string, systemPrompt: string, userPrompt: string): Promise<any> => {
   try {
-    const client = new Cerebras({ apiKey: apiKey.trim() });
-    const response = await client.chat.completions.create({
-      model: CEREBRAS_MODEL,
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt }
-      ],
-      temperature: 0.2, // حرارة منخفضة لضمان الالتزام بالـ JSON
+    const response = await fetch(DEEPSEEK_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey.trim()}`
+      },
+      body: JSON.stringify({
+        model: DEEPSEEK_MODEL,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt }
+        ],
+        temperature: 0.2
+      })
     });
 
-    const choice = (response?.choices as any)?.[0];
+    if (!response.ok) throw new Error('فشل استدعاء DeepSeek API');
+
+    const responseData = await response.json();
+    const choice = responseData?.choices?.[0];
     let rawText = choice?.message?.content || '';
 
     // محاولة استخراج JSON النظيف بدلاً من المصفوفة الإجبارية
@@ -241,7 +269,7 @@ export const askCerebrasGeneric = async (apiKey: string, systemPrompt: string, u
 
     return null;
   } catch (error) {
-    logError('cerebras', error, { context: 'askCerebrasGeneric' });
+    logError('deepseek', error, { context: 'askDeepSeekGeneric' });
     throw error;
   }
 };

@@ -2,7 +2,7 @@ import { auth } from '../firebase/config';
 import { Purchase } from '../types';
 import { normalizeName } from '../utils/normalizer';
 import { aiManager } from './aiServiceManager';
-import { getCerebrasKey } from './cerebras';
+import { getDeepSeekKey } from './cerebras';
 import { logError } from './logger';
 
 const USER_CLASSIFICATIONS_KEY = 'user_classifications_v3';
@@ -182,7 +182,7 @@ export const analyzeWasteWithAI = async (purchases: Purchase[]): Promise<any> =>
         try {
             const uid = auth.currentUser?.uid;
             if (uid) {
-                const apiKey = await getCerebrasKey(uid);
+                const apiKey = await getDeepSeekKey(uid);
                 if (apiKey) {
                     const topWaste = basic.wasteBreakdown.slice(0, 3).map((item: any) => `${item.name}: ${item.lostValue.toFixed(0)} د.ل`).join('، ');
                     

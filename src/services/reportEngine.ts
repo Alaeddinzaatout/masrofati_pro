@@ -159,7 +159,7 @@ export const predictNextMonth = async (purchases: Purchase[]): Promise<Predictio
     const uid = auth.currentUser?.uid;
     if (!uid) return fallback;
 
-    const apiKey = await getCerebrasKey(uid);
+    const apiKey = await getDeepSeekKey(uid);
     if (!apiKey) return fallback;
 
     // حساب بعض الإحصائيات السريعة لتغذية الذكاء الاصطناعي

@@ -49,7 +49,7 @@ export default function ReceiptScreen() {
                   labelStyle: styles.segmentLabel,
                 },
                 { 
-                  value: 'cerebras', 
+                  value: 'deepseek', 
                   label: '✏️ نص', 
                   labelStyle: styles.segmentLabel,
                 },
@@ -80,10 +80,10 @@ export default function ReceiptScreen() {
               <Text style={styles.welcomeSubtitle}>
                 {mode === 'gemini' 
                   ? "صور الإيصال أو اختر صورة من المعرض للبدء" 
-                  : "اكتب تفاصيل مشترياتك وسيقوم جيمي بتنظيمها"}
+                  : "اكتب تفاصيل مشترياتك وسيقوم النظام بتنظيمها"}
               </Text>
               
-              {mode === 'cerebras' && (
+              {mode === 'deepseek' && (
                 <View style={styles.textInputWrapper}>
                    <TextAnalysisInput 
                     value={expenseText}

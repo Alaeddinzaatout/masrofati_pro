@@ -8,7 +8,7 @@ import { useContext, useEffect, useState } from 'react';
 import { ThemeContext } from '../../app/_layout';
 import { auth, db } from '../firebase/config';
 import { aiManager } from '../services/aiServiceManager';
-import { getCerebrasKey, saveCerebrasKey, testCerebrasKey } from '../services/cerebras';
+import { getDeepSeekKey, saveDeepSeekKey, testDeepSeekKey } from '../services/cerebras';
 import { getUserApiKey, saveUserApiKey, testGeminiKey } from '../services/gemini';
 
 const NOTIF_PREFS_KEY = 'notification-preferences';
@@ -24,8 +24,8 @@ export const useSettingsLogic = () => {
 
   // API Keys States
   const [geminiKey, setGeminiKey] = useState('');
-  const [cerebrasKey, setCerebrasKey] = useState('');
-  const [testing, setTesting] = useState({ gemini: false, cerebras: false });
+  const [deepseekKey, setDeepSeekKey] = useState('');
+  const [testing, setTesting] = useState({ gemini: false, deepseek: false });
   
   // Notification States
   const [notifPrefs, setNotifPrefs] = useState<NotificationPrefs>({
@@ -53,10 +53,10 @@ export const useSettingsLogic = () => {
           setGeminiKey(gKey);
         }
         
-        const cKey = await getCerebrasKey(uid);
+        const cKey = await getDeepSeekKey(uid);
         if (isMounted && cKey) {
-          console.log("SETTINGS_HOOK: Cerebras key fetched.");
-          setCerebrasKey(cKey);
+          console.log("SETTINGS_HOOK: DeepSeek key fetched.");
+          setDeepSeekKey(cKey);
         }
 
         // Load Notif Prefs (Still local per device)
@@ -103,13 +103,13 @@ export const useSettingsLogic = () => {
     showSnack('تم حفظ مفتاح Gemini ✅', '#2ecc71');
   };
 
-  const saveCerebrasKeyVal = async (key: string) => {
+  const saveDeepSeekKeyVal = async (key: string) => {
     const uid = auth.currentUser?.uid;
     if (!uid) return;
-    await saveCerebrasKey(uid, key);
-    setCerebrasKey(key);
+    await saveDeepSeekKey(uid, key);
+    setDeepSeekKey(key);
     aiManager.invalidateKeyCache();
-    showSnack('تم حفظ مفتاح Cerebras ✅', '#2ecc71');
+    showSnack('تم حفظ مفتاح DeepSeek ✅', '#2ecc71');
   };
 
   const testGemini = async (key: string) => {
@@ -124,15 +124,15 @@ export const useSettingsLogic = () => {
     }
   };
 
-  const testCerebras = async (key: string) => {
-    setTesting(prev => ({ ...prev, cerebras: true }));
+  const testDeepSeek = async (key: string) => {
+    setTesting(prev => ({ ...prev, deepseek: true }));
     try {
-      const res = await testCerebrasKey(key);
+      const res = await testDeepSeekKey(key);
       showSnack(res.message, res.success ? '#2ecc71' : '#e74c3c');
     } catch (e: any) {
       showSnack('خطأ: ' + e.message, '#e74c3c');
     } finally {
-      setTesting(prev => ({ ...prev, cerebras: false }));
+      setTesting(prev => ({ ...prev, deepseek: false }));
     }
   };
 
@@ -201,15 +201,15 @@ export const useSettingsLogic = () => {
   };
 
   return {
-    geminiKey, cerebrasKey,
+    geminiKey, deepseekKey,
     testing, notifPrefs,
     darkModePref, toggleDarkMode,
     snack, hideSnack,
     actions: {
       saveGeminiKey,
-      saveCerebrasKey: saveCerebrasKeyVal,
+      saveDeepSeekKey: saveDeepSeekKeyVal,
       testGemini,
-      testCerebras,
+      testDeepSeek,
       updateNotifPref,
       checkForUpdates,
       exportData,

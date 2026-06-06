@@ -134,7 +134,7 @@ class PersistentRateLimiter {
 }
 
 let cachedGeminiKey: string | null = null;
-let cachedCerebrasKey: string | null = null;
+let cachedDeepSeekKey: string | null = null;
 
 const getGeminiKeyWithCache = async (): Promise<string | null> => {
     const uid = auth.currentUser?.uid;
@@ -143,22 +143,22 @@ const getGeminiKeyWithCache = async (): Promise<string | null> => {
     return cachedGeminiKey;
 };
 
-const getCerebrasKeyWithCache = async (): Promise<string | null> => {
+const getDeepSeekKeyWithCache = async (): Promise<string | null> => {
     const uid = auth.currentUser?.uid;
     if (!uid) throw new Error('يجب تسجيل الدخول أولاً');
-    if (!cachedCerebrasKey) cachedCerebrasKey = await getCerebrasKey(uid);
-    return cachedCerebrasKey;
+    if (!cachedDeepSeekKey) cachedDeepSeekKey = await getDeepSeekKey(uid);
+    return cachedDeepSeekKey;
 };
 
 class AIServiceManager {
     cache: PersistentCache;
     geminiLimiter: PersistentRateLimiter;
-    cerebrasLimiter: PersistentRateLimiter;
+    deepseekLimiter: PersistentRateLimiter;
 
     constructor() {
         this.cache = new PersistentCache('ai_cache_');
         this.geminiLimiter = new PersistentRateLimiter('gemini', 5, 60_000);
-        this.cerebrasLimiter = new PersistentRateLimiter('cerebras', 10, 60_000);
+        this.deepseekLimiter = new PersistentRateLimiter('deepseek', 10, 60_000);
     }
 
     _getCurrentUserId(): string {
@@ -234,28 +234,28 @@ class AIServiceManager {
         const cached = await this.cache.get(cacheKey);
         if (cached) return cached as ExpenseItem[];
 
-        await this.cerebrasLimiter.canProceed();
+        await this.deepseekLimiter.canProceed();
         
-        // 🛡️ مناعة Cerebras (Retry Loop): المحاولة 3 مرات قبل الاستسلام
+        // 🛡️ مناعة DeepSeek (Retry Loop): المحاولة 3 مرات قبل الاستسلام
         let retries = 3;
         while (retries > 0) {
             try {
-                const apiKey = await getCerebrasKeyWithCache();
-                if (!apiKey) throw new Error('مفتاح Cerebras مفقود');
+                const apiKey = await getDeepSeekKeyWithCache();
+                if (!apiKey) throw new Error('مفتاح DeepSeek مفقود');
                 const result = await analyzeExpenseText(apiKey, text);
                 await this.cache.set(cacheKey, result);
                 return result;
             } catch (error) {
                 retries--;
                 if (retries === 0) {
-                    await this.cerebrasLimiter.rollback();
+                    await this.deepseekLimiter.rollback();
                     throw error;
                 }
                 // انتظار ثانية واحدة قبل المحاولة مجدداً
                 await new Promise(resolve => setTimeout(resolve, 1000));
             }
         }
-        throw new Error('فشل الاتصال بـ Cerebras بعد عدة محاولات');
+        throw new Error('فشل الاتصال بـ DeepSeek بعد عدة محاولات');
     }
 
     async askGenericText(systemPrompt: string, userPrompt: string): Promise<any> {
@@ -264,27 +264,27 @@ class AIServiceManager {
         const cached = await this.cache.get(cacheKey);
         if (cached) return cached;
 
-        await this.cerebrasLimiter.canProceed();
+        await this.deepseekLimiter.canProceed();
         
-        // 🛡️ مناعة Cerebras (Retry Loop)
+        // 🛡️ مناعة DeepSeek (Retry Loop)
         let retries = 3;
         while (retries > 0) {
             try {
-                const apiKey = await getCerebrasKeyWithCache();
-                if (!apiKey) throw new Error('مفتاح Cerebras مفقود');
-                const result = await askCerebrasGeneric(apiKey, systemPrompt, userPrompt);
+                const apiKey = await getDeepSeekKeyWithCache();
+                if (!apiKey) throw new Error('مفتاح DeepSeek مفقود');
+                const result = await askDeepSeekGeneric(apiKey, systemPrompt, userPrompt);
                 if (result) await this.cache.set(cacheKey, result);
                 return result;
             } catch (error) {
                 retries--;
                 if (retries === 0) {
-                    await this.cerebrasLimiter.rollback();
+                    await this.deepseekLimiter.rollback();
                     throw error;
                 }
                 await new Promise(resolve => setTimeout(resolve, 1000));
             }
         }
-        throw new Error('فشل الاتصال بـ Cerebras بعد عدة محاولات');
+        throw new Error('فشل الاتصال بـ DeepSeek بعد عدة محاولات');
     }
 
     async comparePrices(productName: string, currentPrice: number, currentStore: string): Promise<any> {
@@ -357,12 +357,12 @@ class AIServiceManager {
     }
 
     async clearCache(): Promise<void> { await this.cache.clear(); }
-    invalidateKeyCache(): void { cachedGeminiKey = null; cachedCerebrasKey = null; }
+    invalidateKeyCache(): void { cachedGeminiKey = null; cachedDeepSeekKey = null; }
 
     async getLimiterStatus(): Promise<any> {
         return {
             gemini: { remaining: await this.geminiLimiter.getRemaining() },
-            cerebras: { remaining: await this.cerebrasLimiter.getRemaining() },
+            deepseek: { remaining: await this.deepseekLimiter.getRemaining() },
         };
     }
 }

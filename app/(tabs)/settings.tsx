@@ -132,7 +132,7 @@ export default function SettingsScreen() {
 
   const {
     geminiKey,
-    cerebrasKey,
+    deepseekKey,
     testing,
     notifPrefs,
     darkModePref,
@@ -159,12 +159,12 @@ export default function SettingsScreen() {
           <>
             <ApiKeysCard 
               geminiKey={geminiKey}
-              cerebrasKey={cerebrasKey}
+              deepseekKey={deepseekKey}
               testing={testing}
               onSaveGemini={actions.saveGeminiKey}
               onTestGemini={actions.testGemini}
-              onSaveCerebras={actions.saveCerebrasKey}
-              onTestCerebras={actions.testCerebras}
+              onSaveDeepSeek={actions.saveDeepSeekKey}
+              onTestDeepSeek={actions.testDeepSeek}
             />
 
             <View style={{ marginHorizontal: 15, marginBottom: 20, backgroundColor: '#1C222E', borderRadius: 20, padding: 15, borderWidth: 1, borderColor: 'rgba(255, 215, 0, 0.2)' }}>

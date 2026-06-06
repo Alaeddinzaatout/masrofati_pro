@@ -4,38 +4,38 @@ import { Button, Card, TextInput, Text, IconButton } from 'react-native-paper';
 
 interface ApiKeysCardProps {
   geminiKey: string;
-  cerebrasKey: string;
-  testing: { gemini: boolean; cerebras: boolean };
+  deepseekKey: string;
+  testing: { gemini: boolean; deepseek: boolean };
   onSaveGemini: (key: string) => void;
   onTestGemini: (key: string) => void;
-  onSaveCerebras: (key: string) => void;
-  onTestCerebras: (key: string) => void;
+  onSaveDeepSeek: (key: string) => void;
+  onTestDeepSeek: (key: string) => void;
 }
 
 const ApiKeysCard = ({
   geminiKey,
-  cerebrasKey,
+  deepseekKey,
   testing,
   onSaveGemini,
   onTestGemini,
-  onSaveCerebras,
-  onTestCerebras,
+  onSaveDeepSeek,
+  onTestDeepSeek,
 }: ApiKeysCardProps) => {
   const [gKey, setGKey] = useState(geminiKey);
-  const [cKey, setCKey] = useState(cerebrasKey);
+  const [dKey, setDKey] = useState(deepseekKey);
   const [showG, setShowG] = useState(false);
-  const [showC, setShowC] = useState(false);
+  const [showD, setShowD] = useState(false);
 
   useEffect(() => {
     if (geminiKey) setGKey(geminiKey);
   }, [geminiKey]);
 
   useEffect(() => {
-    if (cerebrasKey) setCKey(cerebrasKey);
-  }, [cerebrasKey]);
+    if (deepseekKey) setDKey(deepseekKey);
+  }, [deepseekKey]);
 
   const hasGKey = gKey.length > 10;
-  const hasCKey = cKey.length > 10;
+  const hasDKey = dKey.length > 10;
 
   return (
     <>
@@ -69,26 +69,26 @@ const ApiKeysCard = ({
       <Card style={styles.card}>
         <Card.Content>
           <View style={styles.headerRow}>
-            <Text style={styles.cardTitle}>محرك Cerebras (Cloud)</Text>
-            <View style={[styles.statusDot, { backgroundColor: hasCKey ? '#2ecc71' : '#e74c3c' }]} />
+            <Text style={styles.cardTitle}>محرك DeepSeek (AI)</Text>
+            <View style={[styles.statusDot, { backgroundColor: hasDKey ? '#2ecc71' : '#e74c3c' }]} />
           </View>
           <Text style={styles.cardSubtitle}>المسؤول عن التحليل المالي والنصوص الفائقة السرعة</Text>
           
           <TextInput
             label="مفتاح التشفير (API Key)"
-            value={cKey}
-            onChangeText={setCKey}
+            value={dKey}
+            onChangeText={setDKey}
             mode="outlined"
-            secureTextEntry={!showC}
+            secureTextEntry={!showD}
             style={styles.input}
-            textColor={hasCKey ? "#2ecc71" : "#fff"}
+            textColor={hasDKey ? "#2ecc71" : "#fff"}
             outlineColor="rgba(255,255,255,0.1)"
             activeOutlineColor="#007acc"
-            right={<TextInput.Icon icon={showC ? 'eye-off' : 'eye'} color="#8E94A5" onPress={() => setShowC(!showC)} />}
+            right={<TextInput.Icon icon={showD ? 'eye-off' : 'eye'} color="#8E94A5" onPress={() => setShowD(!showD)} />}
           />
           <View style={styles.buttonRow}>
-            <Button mode="contained" onPress={() => onSaveCerebras(cKey)} style={styles.flexButton} buttonColor="#007acc" icon="content-save">حفظ وربط</Button>
-            <Button mode="contained-tonal" onPress={() => onTestCerebras(cKey)} loading={testing.cerebras} style={styles.testBtn} textColor="#007acc" buttonColor="rgba(0,122,204,0.1)" icon="shield-check">فحص</Button>
+            <Button mode="contained" onPress={() => onSaveDeepSeek(dKey)} style={styles.flexButton} buttonColor="#007acc" icon="content-save">حفظ وربط</Button>
+            <Button mode="contained-tonal" onPress={() => onTestDeepSeek(dKey)} loading={testing.deepseek} style={styles.testBtn} textColor="#007acc" buttonColor="rgba(0,122,204,0.1)" icon="shield-check">فحص</Button>
           </View>
         </Card.Content>
       </Card>
