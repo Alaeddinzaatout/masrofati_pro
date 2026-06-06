@@ -3,7 +3,7 @@
     "name": "مصروفاتي برو",
     "slug": "masrofati-pro",
     "version": "1.0.0",
-    "runtimeVersion": "1.0.0",
+    "runtimeVersion": { "policy": "appVersion" },
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
     "icon": "./assets/images/icon.png",
@@ -67,7 +67,9 @@
     },
     "owner": "alaaddenzaatout",
     "updates": {
-      "url": "https://u.expo.dev/bc209fa3-7e58-4bb1-a872-650a6ce0e053"
+      "url": "https://u.expo.dev/bc209fa3-7e58-4bb1-a872-650a6ce0e053",
+      "fallbackToCacheTimeout": 0,
+      "checkAutomatically": "ON_LOAD"
     }
   }
 }
